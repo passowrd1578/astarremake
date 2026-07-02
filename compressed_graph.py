@@ -22,10 +22,10 @@ class CompressedGraph:
         return sum(len(edges) for edges in self.edges.values())
 
 
-def build_compressed_graph(maze: Grid) -> CompressedGraph:
+def build_compressed_graph(maze: Grid, include_turns: bool = False) -> CompressedGraph:
     start = find_symbol(maze, START)
     goal = find_symbol(maze, END)
-    nodes = _important_nodes(maze, start, goal)
+    nodes = _important_nodes(maze, start, goal, include_turns)
     edge_map: dict[Coord, dict[Coord, Edge]] = {node: {} for node in nodes}
 
     for node in nodes:
@@ -44,7 +44,7 @@ def build_compressed_graph(maze: Grid) -> CompressedGraph:
     )
 
 
-def _important_nodes(maze: Grid, start: Coord, goal: Coord) -> set[Coord]:
+def _important_nodes(maze: Grid, start: Coord, goal: Coord, include_turns: bool) -> set[Coord]:
     nodes = {start, goal}
 
     for row_index, row in enumerate(maze):
@@ -58,7 +58,7 @@ def _important_nodes(maze: Grid, start: Coord, goal: Coord) -> set[Coord]:
 
             if degree != 2:
                 nodes.add(coord)
-            elif _is_turn(coord, neighbors):
+            elif include_turns and _is_turn(coord, neighbors):
                 nodes.add(coord)
 
     return nodes
@@ -85,6 +85,9 @@ def _walk_until_node(
     cost = 1
 
     while current not in nodes:
+        if current in path[:-1]:
+            return None
+
         next_steps = [coord for coord in passable_neighbors(maze, current) if coord != previous]
         if not next_steps:
             return None
