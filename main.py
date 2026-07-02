@@ -17,15 +17,21 @@ def main() -> None:
     compare_parser.add_argument("--maze", type=Path, help="Existing maze file to compare.")
     compare_parser.add_argument("--runs", type=int, default=30, help="Batch size when --maze is not provided.")
     compare_parser.add_argument("--seed", type=int, default=1578, help="Base seed for repeatable batch generation.")
+    compare_parser.add_argument(
+        "--mode",
+        choices=("optimized", "design"),
+        default="optimized",
+        help="Compression mode. Use design to keep turn nodes from the PDF design.",
+    )
 
     args = parser.parse_args()
 
     if args.command == "generate":
         print(f"Saved maze: {save_maze(generate_maze())}")
     elif args.maze:
-        print(compare_maze(args.maze))
+        print(compare_maze(args.maze, compression_mode=args.mode))
     else:
-        run_batch(args.runs, args.seed)
+        run_batch(args.runs, args.seed, args.mode)
         print("Saved results/latest_summary.txt and results/latest_comparison.csv")
 
 
