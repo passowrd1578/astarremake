@@ -21,6 +21,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 @dataclass(frozen=True)
 class ComparisonRow:
     run: int
+    compression_mode: str
     maze_file: str
     normal_found: bool
     compressed_found: bool
@@ -37,7 +38,12 @@ class ComparisonRow:
     path_delta: int
 
 
-def compare_maze(maze_path: Path | None = None, run: int = 1, seed: int | None = None) -> ComparisonRow:
+def compare_maze(
+    maze_path: Path | None = None,
+    run: int = 1,
+    seed: int | None = None,
+    compression_mode: str = "optimized",
+) -> ComparisonRow:
     rng = random.Random(seed) if seed is not None else None
     maze = load_maze(maze_path) if maze_path else generate_maze(rng=rng)
     saved_path = maze_path or save_maze(maze)
@@ -45,7 +51,7 @@ def compare_maze(maze_path: Path | None = None, run: int = 1, seed: int | None =
     goal = find_symbol(maze, END)
 
     normal = astar_search(maze, start, goal)
-    graph = build_compressed_graph(maze)
+    graph = build_compressed_graph(maze, include_turns=compression_mode == "design")
     compressed = compressed_astar_search(graph, start, goal)
 
     _validate_results(normal.found, compressed.found, normal.path_length, compressed.path_length)
@@ -56,6 +62,7 @@ def compare_maze(maze_path: Path | None = None, run: int = 1, seed: int | None =
 
     return ComparisonRow(
         run=run,
+        compression_mode=compression_mode,
         maze_file=_display_path(saved_path),
         normal_found=normal.found,
         compressed_found=compressed.found,
@@ -73,10 +80,10 @@ def compare_maze(maze_path: Path | None = None, run: int = 1, seed: int | None =
     )
 
 
-def run_batch(runs: int = 30, seed: int = 1578) -> list[ComparisonRow]:
+def run_batch(runs: int = 30, seed: int = 1578, compression_mode: str = "optimized") -> list[ComparisonRow]:
     rows = []
     for run in range(1, runs + 1):
-        rows.append(compare_maze(run=run, seed=seed + run))
+        rows.append(compare_maze(run=run, seed=seed + run, compression_mode=compression_mode))
 
     RESULTS_DIR.mkdir(exist_ok=True)
     csv_path = RESULTS_DIR / "latest_comparison.csv"
@@ -125,6 +132,7 @@ def _write_summary(rows: list[ComparisonRow], path: Path) -> None:
     lines = [
         "Compressed Graph A* Comparison Summary",
         f"runs: {len(rows)}",
+        f"compression_mode: {rows[0].compression_mode}",
         f"avg_normal_visited: {mean(row.normal_visited for row in rows):.2f}",
         f"avg_compressed_visited: {mean(row.compressed_visited for row in rows):.2f}",
         f"avg_visited_reduction_percent: {mean(row.visited_reduction_percent for row in rows):.2f}",
@@ -142,9 +150,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Compare normal A* and compressed graph A*.")
     parser.add_argument("--runs", type=int, default=30, help="Number of generated mazes to compare.")
     parser.add_argument("--seed", type=int, default=1578, help="Base seed for repeatable generated mazes.")
+    parser.add_argument(
+        "--mode",
+        choices=("optimized", "design"),
+        default="optimized",
+        help="optimized compresses degree-2 turns; design keeps turn nodes from the PDF design.",
+    )
     args = parser.parse_args()
 
-    rows = run_batch(args.runs, args.seed)
+    rows = run_batch(args.runs, args.seed, args.mode)
     summary = RESULTS_DIR / "latest_summary.txt"
     print(summary.read_text(encoding="utf-8"))
     print(f"Saved detailed CSV: {RESULTS_DIR / 'latest_comparison.csv'}")
