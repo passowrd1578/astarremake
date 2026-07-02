@@ -30,10 +30,16 @@ Run a batch comparison:
 python .\main.py compare --runs 30 --seed 1578
 ```
 
+Use the PDF-style node rule, which keeps turns as graph nodes:
+
+```powershell
+python .\main.py compare --runs 30 --seed 1578 --mode design
+```
+
 ## Latest Result
 
-The latest 30-run batch kept every shortest path length equal while reducing
-the average searched nodes from `77.27` to `25.80`.
+The latest optimized 30-run batch kept every shortest path length equal while
+reducing the average searched nodes from `77.27` to `6.97`.
 
 See:
 
