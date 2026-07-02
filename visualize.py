@@ -37,19 +37,16 @@ def write_maze_svg(
 
     parts = [
         _svg_header(width, height, "Maze shortest path"),
-        f'<rect width="{width}" height="{height}" fill="#f8fafc"/>',
+        f'<rect width="{width}" height="{height}" fill="#ffffff"/>',
+        f'<rect width="{width}" height="{height}" fill="none" stroke="#cbd5e1"/>',
     ]
 
-    for row_index, row in enumerate(maze):
-        for col_index, cell in enumerate(row):
-            coord = (row_index, col_index)
-            x = col_index * cell_size
-            y = row_index * cell_size
-            fill = _cell_color(cell, coord in path_set)
-            parts.append(
-                f'<rect x="{x}" y="{y}" width="{cell_size}" height="{cell_size}" '
-                f'fill="{fill}" stroke="#cbd5e1" stroke-width="1"/>'
-            )
+    wall_path = _cells_to_path(maze, {WALL}, cell_size)
+    path_cells = _cells_to_path_from_set(path_set, cell_size)
+    if wall_path:
+        parts.append(f'<path d="{wall_path}" fill="#111827"/>')
+    if path_cells:
+        parts.append(f'<path d="{path_cells}" fill="#bfdbfe"/>')
 
     if len(path) >= 2:
         points = " ".join(
@@ -127,18 +124,21 @@ def _svg_header(width: int, height: int, title: str) -> str:
     )
 
 
-def _cell_color(cell: str, in_path: bool) -> str:
-    if cell == WALL:
-        return "#111827"
-    if cell == START:
-        return "#22c55e"
-    if cell == END:
-        return "#ef4444"
-    if in_path:
-        return "#bfdbfe"
-    if cell == PATH:
-        return "#ffffff"
-    return "#e5e7eb"
+def _cells_to_path(maze: Grid, symbols: set[str], cell_size: int) -> str:
+    cells = {
+        (row_index, col_index)
+        for row_index, row in enumerate(maze)
+        for col_index, cell in enumerate(row)
+        if cell in symbols
+    }
+    return _cells_to_path_from_set(cells, cell_size)
+
+
+def _cells_to_path_from_set(cells: set[Coord], cell_size: int) -> str:
+    return " ".join(
+        f"M{col * cell_size},{row * cell_size}h{cell_size}v{cell_size}h-{cell_size}z"
+        for row, col in sorted(cells)
+    )
 
 
 def _append_label(parts: list[str], maze: Grid, symbol: str, label: str, cell_size: int) -> None:
@@ -147,6 +147,10 @@ def _append_label(parts: list[str], maze: Grid, symbol: str, label: str, cell_si
             if cell == symbol:
                 x = col_index * cell_size + cell_size / 2
                 y = row_index * cell_size + cell_size / 2 + 5
+                fill = "#22c55e" if symbol == START else "#ef4444"
+                parts.append(
+                    f'<circle cx="{x}" cy="{y - 5}" r="{cell_size / 2 - 3}" fill="{fill}"/>'
+                )
                 parts.append(
                     f'<text x="{x}" y="{y}" text-anchor="middle" font-size="16" '
                     f'font-weight="700" fill="#ffffff">{label}</text>'
