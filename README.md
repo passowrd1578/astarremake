@@ -45,3 +45,5 @@ See:
 
 - `results/latest_summary.txt`
 - `results/latest_comparison.csv`
+- `results/latest_maze.svg`
+- `results/latest_comparison.svg`
