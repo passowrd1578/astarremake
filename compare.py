@@ -11,7 +11,7 @@ from astar import astar_search
 from cga_star import compressed_astar_search
 from compressed_graph import build_compressed_graph
 from maze import END, START, find_symbol, generate_maze, load_maze, save_maze
-from visualize import write_path_preview
+from visualize import write_comparison_svg, write_maze_svg, write_path_preview
 
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
@@ -59,6 +59,7 @@ def compare_maze(
     RESULTS_DIR.mkdir(exist_ok=True)
     preview_path = RESULTS_DIR / f"{saved_path.stem}_path.txt"
     write_path_preview(maze, compressed.path, preview_path)
+    write_maze_svg(maze, compressed.path, set(graph.nodes), RESULTS_DIR / "latest_maze.svg")
 
     return ComparisonRow(
         run=run,
@@ -90,6 +91,7 @@ def run_batch(runs: int = 30, seed: int = 1578, compression_mode: str = "optimiz
     summary_path = RESULTS_DIR / "latest_summary.txt"
     _write_csv(rows, csv_path)
     _write_summary(rows, summary_path)
+    write_comparison_svg(rows, RESULTS_DIR / "latest_comparison.svg")
     return rows
 
 
