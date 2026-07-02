@@ -1,11 +1,12 @@
 Compressed Graph A* Comparison Summary
 runs: 30
+compression_mode: optimized
 avg_normal_visited: 77.27
-avg_compressed_visited: 25.80
-avg_visited_reduction_percent: 67.01
+avg_compressed_visited: 6.97
+avg_visited_reduction_percent: 91.31
 avg_normal_path_length: 68.53
 avg_compressed_path_length: 68.53
-avg_normal_ms: 0.1592
-avg_compressed_ms: 0.0455
-avg_time_reduction_percent: 71.46
+avg_normal_ms: 0.1500
+avg_compressed_ms: 0.0141
+avg_time_reduction_percent: 90.45
 all_path_lengths_equal: True
