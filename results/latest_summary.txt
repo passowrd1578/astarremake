@@ -6,7 +6,9 @@ avg_compressed_visited: 6.97
 avg_visited_reduction_percent: 91.31
 avg_normal_path_length: 68.53
 avg_compressed_path_length: 68.53
-avg_normal_ms: 0.1523
-avg_compressed_ms: 0.0144
-avg_time_reduction_percent: 90.33
+avg_normal_ms: 0.4496
+avg_compressed_build_ms: 2.4418
+avg_compressed_search_ms: 0.0404
+avg_compressed_total_ms: 2.4822
+avg_time_reduction_percent: -497.43
 all_path_lengths_equal: True

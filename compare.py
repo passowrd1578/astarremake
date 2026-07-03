@@ -6,6 +6,7 @@ import random
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from statistics import mean
+from time import perf_counter
 
 from astar import astar_search
 from cga_star import compressed_astar_search
@@ -31,6 +32,9 @@ class ComparisonRow:
     compressed_path_length: int
     normal_ms: float
     compressed_ms: float
+    compressed_build_ms: float
+    compressed_search_ms: float
+    compressed_total_ms: float
     compressed_nodes: int
     compressed_edges: int
     visited_reduction_percent: float
@@ -51,8 +55,11 @@ def compare_maze(
     goal = find_symbol(maze, END)
 
     normal = astar_search(maze, start, goal)
+    build_started = perf_counter()
     graph = build_compressed_graph(maze, include_turns=compression_mode == "design")
+    compressed_build_ms = (perf_counter() - build_started) * 1000
     compressed = compressed_astar_search(graph, start, goal)
+    compressed_total_ms = compressed_build_ms + compressed.elapsed_ms
 
     _validate_results(normal.found, compressed.found, normal.path_length, compressed.path_length)
 
@@ -73,10 +80,13 @@ def compare_maze(
         compressed_path_length=compressed.path_length,
         normal_ms=round(normal.elapsed_ms, 4),
         compressed_ms=round(compressed.elapsed_ms, 4),
+        compressed_build_ms=round(compressed_build_ms, 4),
+        compressed_search_ms=round(compressed.elapsed_ms, 4),
+        compressed_total_ms=round(compressed_total_ms, 4),
         compressed_nodes=len(graph.nodes),
         compressed_edges=graph.edge_count,
         visited_reduction_percent=_reduction(normal.visited_count, compressed.visited_count),
-        time_reduction_percent=_reduction(normal.elapsed_ms, compressed.elapsed_ms),
+        time_reduction_percent=_reduction(normal.elapsed_ms, compressed_total_ms),
         path_delta=compressed.path_length - normal.path_length,
     )
 
@@ -141,7 +151,9 @@ def _write_summary(rows: list[ComparisonRow], path: Path) -> None:
         f"avg_normal_path_length: {mean(row.normal_path_length for row in rows):.2f}",
         f"avg_compressed_path_length: {mean(row.compressed_path_length for row in rows):.2f}",
         f"avg_normal_ms: {mean(row.normal_ms for row in rows):.4f}",
-        f"avg_compressed_ms: {mean(row.compressed_ms for row in rows):.4f}",
+        f"avg_compressed_build_ms: {mean(row.compressed_build_ms for row in rows):.4f}",
+        f"avg_compressed_search_ms: {mean(row.compressed_search_ms for row in rows):.4f}",
+        f"avg_compressed_total_ms: {mean(row.compressed_total_ms for row in rows):.4f}",
         f"avg_time_reduction_percent: {mean(row.time_reduction_percent for row in rows):.2f}",
         f"all_path_lengths_equal: {all(row.path_delta == 0 for row in rows)}",
     ]

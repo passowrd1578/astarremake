@@ -74,9 +74,9 @@ def write_comparison_svg(rows, target) -> None:
     avg_normal_visited = mean(row.normal_visited for row in rows)
     avg_compressed_visited = mean(row.compressed_visited for row in rows)
     avg_normal_ms = mean(row.normal_ms for row in rows)
-    avg_compressed_ms = mean(row.compressed_ms for row in rows)
+    avg_compressed_total_ms = mean(row.compressed_total_ms for row in rows)
     visited_reduction = (avg_normal_visited - avg_compressed_visited) / avg_normal_visited * 100
-    time_reduction = (avg_normal_ms - avg_compressed_ms) / avg_normal_ms * 100
+    time_reduction = (avg_normal_ms - avg_compressed_total_ms) / avg_normal_ms * 100
 
     width = 760
     height = 420
@@ -105,12 +105,12 @@ def write_comparison_svg(rows, target) -> None:
         parts,
         x=410,
         y=130,
-        title="Average runtime",
+        title="Average total runtime",
         normal=avg_normal_ms,
-        compressed=avg_compressed_ms,
+        compressed=avg_compressed_total_ms,
         unit="ms",
         reduction=time_reduction,
-        max_value=avg_normal_ms,
+        max_value=max(avg_normal_ms, avg_compressed_total_ms),
     )
 
     parts.append("</svg>")
@@ -192,7 +192,7 @@ def _append_bar_group(
     )
     parts.append(
         f'<text x="{x}" y="{baseline + 58}" font-size="14" font-weight="700" fill="#16a34a">'
-        f'reduction {reduction:.2f}%</text>'
+        f'change {reduction:.2f}%</text>'
     )
 
 
