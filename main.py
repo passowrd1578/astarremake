@@ -5,6 +5,7 @@ from pathlib import Path
 
 from compare import compare_maze, run_batch
 from maze import generate_maze, save_maze
+from result_report import write_cga_report, write_normal_report
 
 
 def main() -> None:
@@ -24,10 +25,33 @@ def main() -> None:
         help="Compression mode. Use design to keep turn nodes from the PDF design.",
     )
 
+    report_parser = subparsers.add_parser("report", help="Write a text result report for one maze.")
+    report_parser.add_argument("--maze", type=Path, required=True, help="Existing maze file to report.")
+    report_parser.add_argument(
+        "--algorithm",
+        choices=("normal", "cga"),
+        default="cga",
+        help="Algorithm result to report.",
+    )
+    report_parser.add_argument(
+        "--mode",
+        choices=("optimized", "design"),
+        default="optimized",
+        help="Compression mode for CGA*.",
+    )
+    report_parser.add_argument("--output", type=Path, help="Output report text file.")
+
     args = parser.parse_args()
 
     if args.command == "generate":
         print(f"Saved maze: {save_maze(generate_maze())}")
+    elif args.command == "report":
+        if args.algorithm == "normal":
+            path = write_normal_report(args.maze, args.output)
+        else:
+            path = write_cga_report(args.maze, args.mode, args.output)
+        print(path.read_text(encoding="utf-8"))
+        print(f"Saved report: {path}")
     elif args.maze:
         print(compare_maze(args.maze, compression_mode=args.mode))
     else:
